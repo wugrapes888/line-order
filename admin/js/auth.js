@@ -48,6 +48,8 @@ function login() {
         saveToken(res.adminToken, res.expiresAt);
         showScreen('dashboard');
         loadDashboard();
+      } else if (res.error && res.error.indexOf('尚未設定密碼') !== -1) {
+        showScreen('setup');
       } else {
         document.getElementById('login-error').textContent = res.error;
       }
