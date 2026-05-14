@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>商品管理</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <style>
+    .product-item { background: #fff; border-radius: 12px; padding: 14px 16px; margin: 10px 16px; }
+    .product-item.inactive { opacity: 0.5; }
+    .product-item-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .product-item-name { font-weight: 600; font-size: 16px; }
+    .product-item-price { color: var(--color-primary); font-weight: 600; }
+    .product-item-actions { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+    .spec-block { background: #f5f5f5; border-radius: 8px; padding: 10px; margin-top: 8px; }
+    .spec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .spec-header span { font-size: 13px; font-weight: 600; color: #555; }
+    .choices-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .choice-tag { background: #fff; border: 1px solid #ccc; border-radius: 20px; padding: 2px 10px; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+    .choice-tag button { background: none; border: none; cursor: pointer; color: #999; font-size: 14px; line-height: 1; }
+    .spec-add-row { display: flex; gap: 6px; margin-top: 6px; }
+    .spec-add-row input { flex: 1; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+    .spec-add-row button { padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 14px; }
+    .spec-options-row { display: flex; gap: 12px; font-size: 13px; color: #555; margin-top: 4px; }
+    .spec-options-row label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .edit-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 100; overflow-y: auto; }
+    .edit-modal.open { display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; }
+    .modal-box { background: #fff; border-radius: 16px; padding: 24px; width: 100%; max-width: 520px; }
+    .modal-box h2 { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+<header class="admin-header">
+  <button onclick="history.back()">← 返回</button>
+  <h1>商品管理</h1>
+  <button class="btn-primary small" onclick="openAddModal()">+ 新增商品</button>
+</header>
+
+<div id="product-list" style="padding-bottom:40px;"></div>
+
+<!-- 編輯 Modal -->
+<div id="edit-modal" class="edit-modal">
+  <div class="modal-box">
+    <h2 id="modal-title">編輯商品</h2>
+    <input type="hidden" id="edit-product-id" />
+
+    <div class="form-group">
+      <label>商品名稱 *</label>
+      <input type="text" id="edit-name" placeholder="商品名稱" />
+    </div>
+    <div class="form-group">
+      <label>單價 *</label>
+      <input type="number" id="edit-price" placeholder="0" />
+    </div>
+    <div class="form-group">
+      <label>說明</label>
+      <input type="text" id="edit-desc" placeholder="選填" />
+    </div>
+    <div class="form-group">
+      <label>標籤</label>
+      <input type="text" id="edit-badge" placeholder="例：NEW（選填）" />
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;">
+      <span style="font-size:14px;font-weight:600;">規格選項</span>
+      <button type="button" class="btn-sm" onclick="addModalSpec()">+ 新增規格</button>
+    </div>
+    <div id="modal-specs"></div>
+
+    <div style="display:flex;gap:8px;margin-top:20px;">
+      <button class="btn-primary" style="flex:1" onclick="saveProduct()">儲存</button>
+      <button class="btn-sm" style="flex:1" onclick="closeModal()">取消</button>
+    </div>
+    <p id="modal-error" class="error-msg"></p>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  var groupId = new URLSearchParams(window.location.search).get('groupId');
+  var modalSpecCount = 0;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!isLoggedIn()) { window.location.href = 'index.html'; return; }
+    loadProducts();
+  });
+
+  function loadProducts() {
+    callGAS({ action: 'listProducts', adminToken: getToken(), groupId: groupId })
+      .then(function (res) {
+        if (!res.ok) { alert(res.error); return; }
+        renderProducts(res.products);
+      });
+  }
+
+  function renderProducts(products) {
+    var el = document.getElementById('product-list');
+    if (products.length === 0) {
+      el.innerHTML = '<p class="muted" style="padding:16px;">尚無商品，點擊「新增商品」開始</p>';
+      return;
+    }
+    el.innerHTML = products.map(function (p) {
+      var specsHtml = '';
+      if (p.options && p.options.options && p.options.options.length) {
+        specsHtml = p.options.options.map(function (opt) {
+          return '<span class="muted">• ' + opt.name + (opt.required ? '*' : '') + '：' + opt.choices.join('、') + '</span><br>';
+        }).join('');
+      }
+      return '<div class="product-item' + (p.isActive ? '' : ' inactive') + '" id="pi-' + p.productId + '">' +
+        '<div class="product-item-header">' +
+          '<div>' +
+            '<div class="product-item-name">' + p.productName +
+              (p.badge ? ' <span class="tag tag-active" style="font-size:11px;">' + p.badge + '</span>' : '') +
+            '</div>' +
+            '<div class="product-item-price">$' + p.price + '</div>' +
+          '</div>' +
+          '<span class="tag ' + (p.isActive ? 'tag-active' : 'tag-draft') + '">' + (p.isActive ? '上架' : '下架') + '</span>' +
+        '</div>' +
+        (p.description ? '<p class="muted" style="margin-top:4px;">' + p.description + '</p>' : '') +
+        (specsHtml ? '<div style="margin-top:6px;">' + specsHtml + '</div>' : '') +
+        '<div class="product-item-actions">' +
+          '<button class="btn-sm" onclick="openEditModal(' + JSON.stringify(p).replace(/'/g, "&#39;") + ')">編輯</button>' +
+          '<button class="btn-sm" onclick="toggleProduct(\'' + p.productId + '\', ' + !p.isActive + ')">' +
+            (p.isActive ? '下架' : '上架') +
+          '</button>' +
+          '<button class="btn-sm btn-danger" onclick="deleteProduct(\'' + p.productId + '\', \'' + p.productName + '\')">刪除</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function toggleProduct(productId, isActive) {
+    callGAS({ action: 'toggleProduct', adminToken: getToken(), productId: productId, isActive: isActive })
+      .then(function (res) {
+        if (res.ok) loadProducts();
+        else alert('操作失敗：' + res.error);
+      });
+  }
+
+  function deleteProduct(productId, productName) {
+    if (!confirm('確定刪除商品「' + productName + '」？')) return;
+    callGAS({ action: 'deleteProduct', adminToken: getToken(), productId: productId })
+      .then(function (res) {
+        if (res.ok) loadProducts();
+        else alert('刪除失敗：' + res.error);
+      });
+  }
+
+  // ===== Modal =====
+
+  function openAddModal() {
+    document.getElementById('modal-title').textContent = '新增商品';
+    document.getElementById('edit-product-id').value = '';
+    document.getElementById('edit-name').value = '';
+    document.getElementById('edit-price').value = '';
+    document.getElementById('edit-desc').value = '';
+    document.getElementById('edit-badge').value = '';
+    document.getElementById('modal-specs').innerHTML = '';
+    document.getElementById('modal-error').textContent = '';
+    modalSpecCount = 0;
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function openEditModal(p) {
+    document.getElementById('modal-title').textContent = '編輯商品';
+    document.getElementById('edit-product-id').value = p.productId;
+    document.getElementById('edit-name').value = p.productName;
+    document.getElementById('edit-price').value = p.price;
+    document.getElementById('edit-desc').value = p.description || '';
+    document.getElementById('edit-badge').value = p.badge || '';
+    document.getElementById('modal-specs').innerHTML = '';
+    document.getElementById('modal-error').textContent = '';
+    modalSpecCount = 0;
+
+    if (p.options && p.options.options) {
+      p.options.options.forEach(function (opt) {
+        addModalSpec(opt);
+      });
+    }
+    document.getElementById('edit-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('edit-modal').classList.remove('open');
+  }
+
+  function addModalSpec(prefill) {
+    modalSpecCount++;
+    var sIdx = modalSpecCount;
+    var container = document.getElementById('modal-specs');
+    var block = document.createElement('div');
+    block.className = 'spec-block';
+    block.id = 'mspec-' + sIdx;
+    block.innerHTML =
+      '<div class="spec-header">' +
+        '<input type="text" placeholder="規格名稱" id="mspec-name-' + sIdx + '" ' +
+               'style="flex:1;padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:14px;" />' +
+        '<button type="button" onclick="document.getElementById(\'mspec-' + sIdx + '\').remove()" ' +
+                'style="margin-left:8px;background:none;border:none;cursor:pointer;color:#999;font-size:18px;">×</button>' +
+      '</div>' +
+      '<div class="spec-options-row">' +
+        '<label><input type="checkbox" id="mspec-req-' + sIdx + '" /> 必填</label>' +
+        '<label><input type="checkbox" id="mspec-mul-' + sIdx + '" /> 可複選</label>' +
+      '</div>' +
+      '<div class="choices-list" id="mchoices-' + sIdx + '"></div>' +
+      '<div class="spec-add-row">' +
+        '<input type="text" id="mchoice-input-' + sIdx + '" placeholder="新增選項" ' +
+               'onkeydown="if(event.key===\'Enter\'){event.preventDefault();addModalChoice(' + sIdx + ')}" />' +
+        '<button type="button" onclick="addModalChoice(' + sIdx + ')">新增</button>' +
+      '</div>';
+    container.appendChild(block);
+
+    if (prefill) {
+      document.getElementById('mspec-name-' + sIdx).value = prefill.name || '';
+      document.getElementById('mspec-req-' + sIdx).checked = !!prefill.required;
+      document.getElementById('mspec-mul-' + sIdx).checked = !!prefill.multiple;
+      (prefill.choices || []).forEach(function (c) { addModalChoiceValue(sIdx, c); });
+    }
+  }
+
+  function addModalChoice(sIdx) {
+    var input = document.getElementById('mchoice-input-' + sIdx);
+    var val = input.value.trim();
+    if (!val) return;
+    addModalChoiceValue(sIdx, val);
+    input.value = '';
+    input.focus();
+  }
+
+  function addModalChoiceValue(sIdx, val) {
+    var list = document.getElementById('mchoices-' + sIdx);
+    var tag = document.createElement('span');
+    tag.className = 'choice-tag';
+    tag.dataset.value = val;
+    tag.innerHTML = val + '<button type="button" onclick="this.parentElement.remove()">×</button>';
+    list.appendChild(tag);
+  }
+
+  function collectModalSpecs() {
+    var options = [];
+    document.querySelectorAll('#modal-specs .spec-block').forEach(function (block) {
+      var sIdx = block.id.replace('mspec-', '');
+      var name = document.getElementById('mspec-name-' + sIdx).value.trim();
+      if (!name) return;
+      var required = document.getElementById('mspec-req-' + sIdx).checked;
+      var multiple = document.getElementById('mspec-mul-' + sIdx).checked;
+      var choices = Array.from(block.querySelectorAll('.choice-tag')).map(function (t) { return t.dataset.value; });
+      if (choices.length === 0) return;
+      options.push({ name: name, required: required, multiple: multiple, choices: choices });
+    });
+    return { options: options };
+  }
+
+  function saveProduct() {
+    var productId = document.getElementById('edit-product-id').value;
+    var name  = document.getElementById('edit-name').value.trim();
+    var price = parseFloat(document.getElementById('edit-price').value);
+    var desc  = document.getElementById('edit-desc').value.trim();
+    var badge = document.getElementById('edit-badge').value.trim();
+
+    if (!name || isNaN(price)) {
+      document.getElementById('modal-error').textContent = '請填寫商品名稱與單價';
+      return;
+    }
+
+    callGAS({
+      action:      'saveProduct',
+      adminToken:  getToken(),
+      groupId:     groupId,
+      productId:   productId || undefined,
+      productName: name,
+      price:       price,
+      description: desc,
+      badge:       badge,
+      isActive:    true,
+      options:     collectModalSpecs()
+    }).then(function (res) {
+      if (res.ok) { closeModal(); loadProducts(); }
+      else { document.getElementById('modal-error').textContent = res.error; }
+    });
+  }
+</script>
+</body>
+</html>

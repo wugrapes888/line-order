@@ -1,0 +1,127 @@
+/* LIFF 客人端樣式 */
+:root {
+  --color-primary: #1D9E75;
+  --color-danger:  #E24B4A;
+  --color-text:    #333333;
+  --color-muted:   #888888;
+  --color-bg:      #F5F5F0;
+  --color-white:   #FFFFFF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, 'Noto Sans TC', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 16px;
+  padding-bottom: 100px;
+}
+
+.screen { display: none; padding: 16px; }
+.screen.active { display: block; }
+
+/* 載入中 */
+#screen-loading { text-align: center; padding-top: 30vh; }
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid #ddd;
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* 錯誤頁 */
+#screen-error { text-align: center; padding-top: 25vh; }
+.error-icon { font-size: 64px; color: var(--color-danger); margin-bottom: 16px; }
+
+/* 成功頁 */
+.success-icon { font-size: 64px; color: var(--color-primary); margin-bottom: 16px; text-align: center; }
+#screen-success { text-align: center; }
+
+/* 標題 */
+.order-header { margin-bottom: 16px; }
+.order-header h1 { font-size: 22px; }
+.muted { color: var(--color-muted); font-size: 14px; margin-top: 4px; }
+
+/* 商品卡片 */
+.product-card {
+  background: var(--color-white);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.product-info { display: flex; justify-content: space-between; align-items: center; }
+.product-name { font-size: 17px; font-weight: 600; }
+.product-price { font-size: 16px; color: var(--color-primary); font-weight: 600; }
+.product-desc { font-size: 13px; color: var(--color-muted); margin-top: 4px; }
+.badge { background: var(--color-primary); color: #fff; border-radius: 4px; font-size: 11px; padding: 1px 5px; vertical-align: middle; }
+
+/* 規格選項 */
+.option-group { margin-top: 10px; }
+.option-label { font-size: 13px; color: var(--color-muted); display: block; margin-bottom: 6px; }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice-label {
+  display: flex; align-items: center; gap: 4px;
+  background: #f0f0f0; border-radius: 999px;
+  padding: 6px 14px; font-size: 14px; cursor: pointer;
+}
+
+/* 數量控制 */
+.qty-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.qty-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid #ccc;
+  background: var(--color-white);
+  font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.qty-val { font-size: 18px; font-weight: 600; min-width: 24px; text-align: center; }
+
+/* 表單 */
+.form-section { background: var(--color-white); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.form-section h3 { font-size: 16px; margin-bottom: 12px; }
+.form-group { margin-bottom: 12px; }
+.form-group label { font-size: 14px; display: block; margin-bottom: 4px; }
+.required { color: var(--color-danger); }
+.form-group input {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid #ddd; border-radius: 8px;
+  font-size: 16px;
+}
+.form-group input:focus { outline: none; border-color: var(--color-primary); }
+
+/* 底部合計 & 送出按鈕 */
+.order-footer {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--color-white);
+  padding: 12px 16px;
+  box-shadow: 0 -2px 8px rgba(0,0,0,.08);
+  display: flex; align-items: center; gap: 12px;
+}
+.order-total { font-size: 20px; font-weight: 700; flex: 1; }
+.btn-primary {
+  flex: 2; padding: 12px;
+  background: var(--color-primary); color: #fff;
+  border: none; border-radius: 999px;
+  font-size: 18px; font-weight: 600; cursor: pointer;
+}
+.btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+.btn-outline {
+  display: inline-block; margin-top: 16px; padding: 10px 24px;
+  border: 1.5px solid var(--color-primary); color: var(--color-primary);
+  border-radius: 999px; font-size: 16px; text-decoration: none;
+}
+
+/* 訂單卡片 */
+.order-card { background: var(--color-white); border-radius: 12px; padding: 16px; margin: 16px 0; text-align: left; }
+.order-card p { padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 15px; }
+.total-line { font-size: 18px; font-weight: 700; color: var(--color-primary); }
+.pickup-status { color: var(--color-muted); }
+.order-id { font-size: 13px; color: var(--color-muted); }
+
+.hint-text { margin-top: 12px; font-size: 13px; }
+hr { border: none; border-top: 1px solid #eee; margin: 8px 0; }

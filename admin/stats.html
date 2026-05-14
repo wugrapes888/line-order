@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>團購統計</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <style>
+    .stats-section { background: #fff; border-radius: 12px; padding: 16px; margin: 12px 16px; }
+    .stats-section h3 { font-size: 15px; margin-bottom: 12px; color: #555; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+    .stats-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .stats-table th { text-align: left; font-weight: 600; color: #888; padding: 4px 8px; }
+    .stats-table td { padding: 8px 8px; border-top: 1px solid #f0f0f0; }
+    .stats-table td:last-child { text-align: right; font-weight: 600; }
+    .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .bar-label { width: 100px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { flex: 1; background: #f0f0f0; border-radius: 4px; height: 10px; }
+    .bar-fill { background: var(--color-primary); border-radius: 4px; height: 10px; }
+    .bar-val { width: 40px; text-align: right; font-size: 13px; font-weight: 600; }
+  </style>
+</head>
+<body>
+<header class="admin-header">
+  <button onclick="history.back()">← 返回</button>
+  <h1 id="page-title">團購統計</h1>
+  <button class="btn-logout" onclick="logout()">登出</button>
+</header>
+
+<div id="stats-content" style="padding-bottom:40px;">
+  <p class="muted" style="padding:20px;">載入中...</p>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  var groupId = new URLSearchParams(window.location.search).get('groupId');
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!isLoggedIn()) { window.location.href = 'index.html'; return; }
+    loadStats();
+  });
+
+  function loadStats() {
+    callGAS({ action: 'getGroupStats', adminToken: getToken(), groupId: groupId })
+      .then(function (res) {
+        if (!res.ok) { document.getElementById('stats-content').innerHTML = '<p class="error-msg" style="padding:16px;">' + res.error + '</p>'; return; }
+        renderStats(res);
+      });
+  }
+
+  function renderStats(data) {
+    var html = '';
+
+    // 總覽
+    html += '<div class="stats-row">' +
+      '<div class="stat-card"><span class="stat-num">' + data.totalOrders + '</span><span>訂單數</span></div>' +
+      '<div class="stat-card"><span class="stat-num">$' + data.totalAmount + '</span><span>總金額</span></div>' +
+    '</div>';
+
+    // 商品統計
+    var productEntries = Object.keys(data.productStats).map(function (k) { return { name: k, qty: data.productStats[k] }; });
+    productEntries.sort(function (a, b) { return b.qty - a.qty; });
+    var maxQty = productEntries.length ? productEntries[0].qty : 1;
+
+    html += '<div class="stats-section"><h3>商品銷售統計</h3>';
+    if (productEntries.length === 0) {
+      html += '<p class="muted">尚無商品資料</p>';
+    } else {
+      productEntries.forEach(function (e) {
+        var pct = Math.round((e.qty / maxQty) * 100);
+        html += '<div class="bar-row">' +
+          '<span class="bar-label" title="' + e.name + '">' + e.name + '</span>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;"></div></div>' +
+          '<span class="bar-val">' + e.qty + '</span>' +
+        '</div>';
+      });
+    }
+    html += '</div>';
+
+    // 來源統計
+    var refEntries = Object.keys(data.refStats).map(function (k) { return { ref: k, count: data.refStats[k] }; });
+    refEntries.sort(function (a, b) { return b.count - a.count; });
+    var maxRef = refEntries.length ? refEntries[0].count : 1;
+
+    html += '<div class="stats-section"><h3>來源統計（ref）</h3>';
+    if (refEntries.length === 0) {
+      html += '<p class="muted">尚無來源資料</p>';
+    } else {
+      html += '<table class="stats-table"><tr><th>來源</th><th>訂單數</th></tr>';
+      refEntries.forEach(function (e) {
+        html += '<tr><td>' + e.ref + '</td><td>' + e.count + '</td></tr>';
+      });
+      html += '</table>';
+    }
+    html += '</div>';
+
+    document.getElementById('stats-content').innerHTML = html;
+  }
+</script>
+</body>
+</html>

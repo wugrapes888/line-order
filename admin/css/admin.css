@@ -1,0 +1,65 @@
+:root {
+  --color-primary: #1D9E75;
+  --color-danger:  #E24B4A;
+  --color-text:    #333333;
+  --color-muted:   #888888;
+  --color-bg:      #F5F5F0;
+  --color-white:   #FFFFFF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Noto Sans TC', sans-serif; background: var(--color-bg); color: var(--color-text); font-size: 16px; }
+
+.screen { display: none; padding: 16px; }
+.screen.active { display: block; }
+
+.auth-box { max-width: 380px; margin: 80px auto; background: var(--color-white); border-radius: 16px; padding: 32px; }
+.auth-box h1 { margin-bottom: 8px; }
+
+.admin-header { display: flex; align-items: center; gap: 12px; background: var(--color-white); padding: 12px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); position: sticky; top: 0; z-index: 10; }
+.admin-header h1 { flex: 1; font-size: 18px; }
+
+.form-group { margin-bottom: 14px; }
+.form-group label { font-size: 14px; display: block; margin-bottom: 4px; }
+.form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 16px; }
+.required { color: var(--color-danger); }
+
+.form-section { padding: 16px; max-width: 600px; margin: 0 auto; }
+.form-section h3 { margin: 20px 0 12px; }
+
+.btn-primary { padding: 12px 24px; background: var(--color-primary); color: #fff; border: none; border-radius: 999px; font-size: 16px; cursor: pointer; }
+.btn-primary.small { font-size: 14px; padding: 8px 16px; }
+.btn-outline { padding: 10px 20px; border: 1.5px solid var(--color-primary); color: var(--color-primary); background: transparent; border-radius: 999px; font-size: 15px; cursor: pointer; }
+.btn-danger { padding: 8px 16px; background: var(--color-danger); color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+.btn-logout { padding: 6px 14px; background: none; border: 1.5px solid #ccc; border-radius: 999px; cursor: pointer; font-size: 14px; }
+
+.group-card, .order-card { background: var(--color-white); border-radius: 12px; padding: 16px; margin: 12px 16px; }
+.group-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.group-name { font-size: 17px; font-weight: 600; }
+.group-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.group-actions button { padding: 6px 14px; border-radius: 8px; border: 1px solid #ddd; background: var(--color-white); cursor: pointer; font-size: 14px; }
+
+.tag { border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 600; }
+.tag-active { background: #d4f0e5; color: var(--color-primary); }
+.tag-draft  { background: #f0f0f0; color: #666; }
+.tag-closed { background: #fee; color: var(--color-danger); }
+
+.stats-row { display: flex; gap: 12px; padding: 16px; }
+.stat-card { flex: 1; background: var(--color-white); border-radius: 12px; padding: 16px; text-align: center; }
+.stat-num { display: block; font-size: 28px; font-weight: 700; color: var(--color-primary); }
+
+.product-form-card { background: #f9f9f9; border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+.product-form-header { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 10px; }
+
+.muted { color: var(--color-muted); font-size: 14px; }
+.error-msg { color: var(--color-danger); font-size: 14px; margin-top: 8px; }
+.success-msg { color: var(--color-primary); font-size: 14px; margin-top: 8px; }
+
+.order-card { border-left: 4px solid transparent; }
+.order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.item-list { list-style: none; margin: 8px 0; padding: 0; }
+.item-list li { font-size: 14px; padding: 4px 0; border-top: 1px solid #f0f0f0; }
+.order-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #eee; }
+.order-total-label { font-size: 15px; }
+.order-actions { display: flex; gap: 8px; }
+.btn-sm { padding: 5px 12px; border-radius: 8px; border: 1px solid #ddd; background: var(--color-white); cursor: pointer; font-size: 13px; }
+.btn-sm.btn-danger { background: var(--color-danger); color: #fff; border-color: var(--color-danger); }

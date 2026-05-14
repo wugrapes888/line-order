@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>系統設定</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <style>
+    .settings-section { background: #fff; border-radius: 12px; padding: 16px; margin: 12px 16px; }
+    .settings-section h3 { font-size: 15px; margin-bottom: 12px; }
+    .ref-tag { display: inline-flex; align-items: center; gap: 4px; background: #f0f0f0; border-radius: 20px; padding: 4px 12px; font-size: 13px; margin: 4px; }
+    .ref-tag button { background: none; border: none; cursor: pointer; color: #999; font-size: 16px; }
+    .add-ref-row { display: flex; gap: 8px; margin-top: 10px; }
+    .add-ref-row input { flex: 1; padding: 8px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 15px; }
+  </style>
+</head>
+<body>
+<header class="admin-header">
+  <button onclick="history.back()">← 返回</button>
+  <h1>系統設定</h1>
+  <button class="btn-logout" onclick="logout()">登出</button>
+</header>
+
+<div style="padding-bottom: 40px;">
+
+  <!-- 通知信箱 -->
+  <div class="settings-section">
+    <h3>每日彙整通知信箱</h3>
+    <p class="muted" style="margin-bottom:10px;">每天 22:00 若有新訂單則寄送彙整信</p>
+    <div class="form-group">
+      <input type="email" id="notify-email" placeholder="example@gmail.com" />
+    </div>
+    <button class="btn-primary small" onclick="saveEmail()">儲存信箱</button>
+    <p id="email-msg" class="success-msg"></p>
+  </div>
+
+  <!-- 來源（ref）預設清單 -->
+  <div class="settings-section">
+    <h3>分享來源預設清單</h3>
+    <p class="muted" style="margin-bottom:10px;">建立團購分享連結時，可從這裡選擇 ref 來源參數，方便追蹤各管道訂單數量</p>
+    <div id="ref-tags"></div>
+    <div class="add-ref-row">
+      <input type="text" id="ref-input" placeholder="輸入來源名稱，例：媽媽群" onkeydown="if(event.key==='Enter'){addRef()}" />
+      <button class="btn-sm" onclick="addRef()">新增</button>
+    </div>
+    <p id="ref-msg" class="success-msg"></p>
+    <button class="btn-primary small" style="margin-top:12px;" onclick="saveRefs()">儲存來源清單</button>
+  </div>
+
+  <!-- LIFF ID 設定提示 -->
+  <div class="settings-section">
+    <h3>LIFF 設定</h3>
+    <p class="muted">LIFF ID 需在部署時直接修改 <code>liff/js/config.js</code> 和 <code>gas/SetupService.gs</code> 的系統設定工作表。</p>
+    <p class="muted" style="margin-top:8px;">部署後請執行 <code>initSheets()</code> 以確認系統設定表的 <code>liffId</code> 值已正確填入。</p>
+  </div>
+
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  var currentRefs = [];
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!isLoggedIn()) { window.location.href = 'index.html'; return; }
+    loadSettings();
+  });
+
+  function loadSettings() {
+    // 從 GAS 取得設定（透過 listGroups 用現有 token 測試連線後，再取設定）
+    callGAS({ action: 'getSettings', adminToken: getToken() })
+      .then(function (res) {
+        if (!res.ok) return; // silently ignore if action not yet wired
+        if (res.notifyEmail) document.getElementById('notify-email').value = res.notifyEmail;
+        if (res.refPresets) {
+          currentRefs = res.refPresets;
+          renderRefs();
+        }
+      })
+      .catch(function () {});
+
+    // fallback: load from localStorage cache
+    var cached = localStorage.getItem('settings_refs');
+    if (cached) {
+      try { currentRefs = JSON.parse(cached); renderRefs(); } catch (e) {}
+    }
+  }
+
+  function renderRefs() {
+    var el = document.getElementById('ref-tags');
+    if (currentRefs.length === 0) {
+      el.innerHTML = '<p class="muted">尚無預設來源，新增後可在建立分享連結時使用</p>';
+      return;
+    }
+    el.innerHTML = currentRefs.map(function (r, i) {
+      return '<span class="ref-tag">' + r +
+             '<button onclick="removeRef(' + i + ')">×</button></span>';
+    }).join('');
+  }
+
+  function addRef() {
+    var val = document.getElementById('ref-input').value.trim();
+    if (!val) return;
+    if (currentRefs.indexOf(val) !== -1) { alert('此來源已存在'); return; }
+    currentRefs.push(val);
+    renderRefs();
+    document.getElementById('ref-input').value = '';
+  }
+
+  function removeRef(idx) {
+    currentRefs.splice(idx, 1);
+    renderRefs();
+  }
+
+  function saveRefs() {
+    localStorage.setItem('settings_refs', JSON.stringify(currentRefs));
+    callGAS({ action: 'saveSetting', adminToken: getToken(), key: 'refPresets', value: JSON.stringify(currentRefs) })
+      .then(function (res) {
+        document.getElementById('ref-msg').textContent = '✓ 已儲存';
+        setTimeout(function () { document.getElementById('ref-msg').textContent = ''; }, 2000);
+      })
+      .catch(function () {
+        document.getElementById('ref-msg').textContent = '✓ 已存本機（GAS 連線失敗，下次重試）';
+      });
+  }
+
+  function saveEmail() {
+    var email = document.getElementById('notify-email').value.trim();
+    if (!email) { alert('請輸入信箱'); return; }
+    callGAS({ action: 'saveSetting', adminToken: getToken(), key: 'notifyEmail', value: email })
+      .then(function (res) {
+        if (res.ok) {
+          document.getElementById('email-msg').textContent = '✓ 信箱已儲存';
+          setTimeout(function () { document.getElementById('email-msg').textContent = ''; }, 2000);
+        } else {
+          alert('儲存失敗：' + res.error);
+        }
+      });
+  }
+</script>
+</body>
+</html>

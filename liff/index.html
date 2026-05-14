@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>團購下單</title>
+  <link rel="stylesheet" href="css/liff.css" />
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+
+<!-- 載入中 -->
+<div id="screen-loading" class="screen active">
+  <div class="spinner"></div>
+  <p>載入中...</p>
+</div>
+
+<!-- 錯誤頁 -->
+<div id="screen-error" class="screen">
+  <div class="error-icon">✕</div>
+  <h2 id="error-title">找不到此團購</h2>
+  <p id="error-message">請確認連結是否正確</p>
+</div>
+
+<!-- 下單頁 -->
+<div id="screen-order" class="screen">
+  <header class="order-header">
+    <h1 id="group-name">團購名稱</h1>
+    <p id="deadline-info" class="muted"></p>
+  </header>
+
+  <!-- 商品列表 -->
+  <div id="product-list"></div>
+
+  <!-- 客人資料 -->
+  <section class="form-section">
+    <h3>填寫資料</h3>
+    <div class="form-group">
+      <label>姓名 <span class="required">*</span></label>
+      <input type="text" id="input-name" placeholder="請輸入姓名" autocomplete="name" />
+    </div>
+    <div class="form-group">
+      <label>電話 <span class="required">*</span></label>
+      <input type="tel" id="input-phone" placeholder="請輸入手機號碼" autocomplete="tel" />
+    </div>
+    <div class="form-group">
+      <label>備註</label>
+      <input type="text" id="input-note" placeholder="取貨時間、其他備註（選填）" />
+    </div>
+  </section>
+
+  <!-- 訂單小計 -->
+  <div class="order-footer">
+    <div class="order-total">合計：<span id="order-total">$0</span></div>
+    <button id="btn-submit" class="btn-primary" disabled>送出訂單</button>
+  </div>
+</div>
+
+<!-- 成功頁 -->
+<div id="screen-success" class="screen">
+  <div class="success-icon">✓</div>
+  <h2>訂單已送出！</h2>
+  <div id="success-summary" class="order-card"></div>
+  <a id="btn-view-order" class="btn-outline" href="#" target="_blank">查看完整訂單</a>
+  <p class="muted hint-text">同一支手機可從 LINE 重新點擊連結查看本次訂單</p>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/liff-init.js"></script>
+<script src="js/order.js"></script>
+</body>
+</html>

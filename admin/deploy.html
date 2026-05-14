@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>部署檢查</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <style>
+    .checklist-section { background: #fff; border-radius: 12px; padding: 16px; margin: 12px 16px; }
+    .checklist-section h3 { font-size: 15px; color: #555; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+    .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f5f5f5; }
+    .check-item:last-child { border-bottom: none; }
+    .check-item input[type="checkbox"] { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--color-primary); flex-shrink: 0; }
+    .check-item label { font-size: 14px; cursor: pointer; }
+    .check-item label small { display: block; color: #888; margin-top: 2px; font-size: 12px; }
+    .check-item label code { background: #f5f5f5; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+    .progress-bar-track { background: #eee; border-radius: 4px; height: 8px; margin: 12px 16px; }
+    .progress-bar-fill { background: var(--color-primary); border-radius: 4px; height: 8px; transition: width .3s; }
+    .progress-label { text-align: center; font-size: 13px; color: #666; margin-bottom: 8px; }
+    .tag-done { background: #d4f0e5; color: var(--color-primary); border-radius: 4px; padding: 1px 8px; font-size: 12px; }
+  </style>
+</head>
+<body>
+<header class="admin-header">
+  <button onclick="history.back()">← 返回</button>
+  <h1>部署檢查清單</h1>
+</header>
+
+<p class="progress-label" id="progress-label">0 / 0 完成</p>
+<div class="progress-bar-track"><div class="progress-bar-fill" id="progress-bar" style="width:0%"></div></div>
+
+<div style="padding-bottom:40px;">
+
+  <div class="checklist-section">
+    <h3>一、Google Sheets 設定</h3>
+    <div class="check-item">
+      <input type="checkbox" id="c1" onchange="updateProgress()" />
+      <label for="c1">建立 Google Sheets 試算表，記錄 Sheets ID
+        <small>從試算表網址取得，格式：<code>https://docs.google.com/spreadsheets/d/<strong>SHEET_ID</strong>/edit</code></small>
+      </label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c2" onchange="updateProgress()" />
+      <label for="c2">在 GAS 的 <code>Code.gs</code> 填入 Sheets ID
+        <small>修改第 4 行：<code>var SHEET_ID = '你的 ID';</code></small>
+      </label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c3" onchange="updateProgress()" />
+      <label for="c3">在 GAS 編輯器執行 <code>initSheets()</code>，確認 6 個工作表已建立
+        <small>包含：團購主檔、團購商品設定、團購訂單主檔、團購訂單明細、POS發貨清單、系統設定</small>
+      </label>
+    </div>
+  </div>
+
+  <div class="checklist-section">
+    <h3>二、GAS Web App 部署</h3>
+    <div class="check-item">
+      <input type="checkbox" id="c4" onchange="updateProgress()" />
+      <label for="c4">在 GAS 編輯器執行「部署 → 新增部署作業」
+        <small>類型選「網頁應用程式」，「以誰身份執行」選自己，「存取權」選「所有人」</small>
+      </label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c5" onchange="updateProgress()" />
+      <label for="c5">複製 GAS Web App URL，更新 <code>liff/js/config.js</code> 與 <code>admin/js/config.js</code> 的 <code>GAS_URL</code>
+        <small>格式：<code>https://script.google.com/macros/s/XXXXX/exec</code></small>
+      </label>
+    </div>
+  </div>
+
+  <div class="checklist-section">
+    <h3>三、LINE LIFF 設定</h3>
+    <div class="check-item">
+      <input type="checkbox" id="c6" onchange="updateProgress()" />
+      <label for="c6">在 LINE Developers Console 建立 LIFF App（類型：Full screen 或 Tall）
+        <small>網址填入前端部署後的 URL（例如 GitHub Pages URL）</small>
+      </label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c7" onchange="updateProgress()" />
+      <label for="c7">複製 LIFF ID，更新 <code>liff/js/config.js</code> 的 <code>LIFF_ID</code>
+        <small>格式：<code>1234567890-XXXXXXXX</code></small>
+      </label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c8" onchange="updateProgress()" />
+      <label for="c8">在 GAS「系統設定」工作表中，將 <code>liffId</code> 的值更新為正確的 LIFF ID
+        <small>或重新執行 <code>initSheets()</code> 後手動修改該儲存格</small>
+      </label>
+    </div>
+  </div>
+
+  <div class="checklist-section">
+    <h3>四、前端部署（GitHub Pages）</h3>
+    <div class="check-item">
+      <input type="checkbox" id="c9" onchange="updateProgress()" />
+      <label for="c9">將整個 <code>liff/</code> 資料夾推到 GitHub，開啟 GitHub Pages
+        <small>Settings → Pages → Source 選 main branch，根目錄或 /liff</small>
+      </label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c10" onchange="updateProgress()" />
+      <label for="c10">將 <code>admin/</code> 資料夾同樣部署（可用同一 repo 的不同路徑）
+        <small>後台建議只開放內部使用，不需要公開連結</small>
+      </label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c11" onchange="updateProgress()" />
+      <label for="c11">更新 LINE Developers Console 的 LIFF 端點 URL 為正確的 GitHub Pages URL</label>
+    </div>
+  </div>
+
+  <div class="checklist-section">
+    <h3>五、後台初始設定</h3>
+    <div class="check-item">
+      <input type="checkbox" id="c12" onchange="updateProgress()" />
+      <label for="c12">首次進入後台（<code>admin/index.html</code>），設定管理密碼</label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c13" onchange="updateProgress()" />
+      <label for="c13">到「設定」頁面設定每日彙整通知信箱</label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c14" onchange="updateProgress()" />
+      <label for="c14">在 GAS 編輯器建立 time-driven trigger：每天 22:00 執行 <code>sendDailySummary</code>
+        <small>GAS 編輯器 → 觸發條件 → 新增觸發條件 → 函式：sendDailySummary，時間：每天，22:00–23:00</small>
+      </label>
+    </div>
+  </div>
+
+  <div class="checklist-section">
+    <h3>六、端到端測試</h3>
+    <div class="check-item">
+      <input type="checkbox" id="c15" onchange="updateProgress()" />
+      <label for="c15">在後台建立一個測試團購，設定截團時間，新增至少一個商品（含規格）</label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c16" onchange="updateProgress()" />
+      <label for="c16">從 LINE 群組點擊 LIFF 分享連結，在 LINE App 內完成下單</label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c17" onchange="updateProgress()" />
+      <label for="c17">確認 Google Sheets「團購訂單主檔」與「POS發貨清單」都有寫入正確資料</label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c18" onchange="updateProgress()" />
+      <label for="c18">在後台訂單列表確認訂單顯示，並測試「標記已取」與「取消訂單」功能</label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c19" onchange="updateProgress()" />
+      <label for="c19">測試結團功能，確認封存分頁正確建立</label>
+    </div>
+    <div class="check-item">
+      <input type="checkbox" id="c20" onchange="updateProgress()" />
+      <label for="c20">用同一支手機點擊同一連結，確認出現上次訂單摘要而非空白頁</label>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var STORAGE_KEY = 'deploy_checklist';
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) {}
+    document.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+      if (saved[cb.id]) cb.checked = true;
+    });
+    updateProgress();
+  });
+
+  function updateProgress() {
+    var all = document.querySelectorAll('input[type="checkbox"]');
+    var done = Array.from(all).filter(function (cb) { return cb.checked; }).length;
+    document.getElementById('progress-label').textContent = done + ' / ' + all.length + ' 完成';
+    document.getElementById('progress-bar').style.width = Math.round(done / all.length * 100) + '%';
+
+    var state = {};
+    all.forEach(function (cb) { state[cb.id] = cb.checked; });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>訂單列表</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+<header class="admin-header">
+  <button onclick="history.back()">← 返回</button>
+  <h1 id="page-title">訂單列表</h1>
+  <button class="btn-logout" onclick="logout()">登出</button>
+</header>
+
+<div id="order-stats" class="stats-row"></div>
+<div id="order-list"></div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  var groupId = new URLSearchParams(window.location.search).get('groupId');
+
+  document.addEventListener('DOMContentLoaded', function () {
+    if (!isLoggedIn()) { window.location.href = 'index.html'; return; }
+    loadOrders();
+  });
+
+  function loadOrders() {
+    callGAS({ action: 'listOrders', adminToken: getToken(), groupId: groupId })
+      .then(function (res) {
+        if (!res.ok) { logout(); return; }
+        renderOrders(res.orders);
+      });
+  }
+
+  function renderOrders(orders) {
+    var active = orders.filter(function (o) { return o.orderStatus === 'active'; });
+    var pickedUp = active.filter(function (o) { return o.pickupStatus === 'picked_up'; }).length;
+    var total = active.reduce(function (s, o) { return s + (Number(o.totalAmount) || 0); }, 0);
+
+    document.getElementById('order-stats').innerHTML =
+      '<div class="stat-card"><span class="stat-num">' + active.length + '</span><span>訂單數</span></div>' +
+      '<div class="stat-card"><span class="stat-num">$' + total + '</span><span>總金額</span></div>' +
+      '<div class="stat-card"><span class="stat-num">' + pickedUp + ' / ' + active.length + '</span><span>已取貨</span></div>';
+
+    var el = document.getElementById('order-list');
+    if (active.length === 0) { el.innerHTML = '<p class="muted" style="padding:16px;">尚無訂單</p>'; return; }
+
+    el.innerHTML = active.map(function (o) {
+      var isPicked = o.pickupStatus === 'picked_up';
+      var itemsHtml = (o.items || []).map(function (i) {
+        var opts = '';
+        try {
+          var parsed = JSON.parse(i.selectedOptions);
+          var parts = [];
+          Object.keys(parsed).forEach(function (k) {
+            var v = parsed[k];
+            parts.push(k + '：' + (Array.isArray(v) ? v.join('、') : v));
+          });
+          if (parts.length) opts = '<span class="muted"> (' + parts.join('，') + ')</span>';
+        } catch (e) {}
+        return '<li>' + i.productName + opts + ' × ' + i.quantity + '　<strong>$' + i.subtotal + '</strong></li>';
+      }).join('');
+
+      return '<div class="order-card" id="order-' + o.orderId + '">' +
+        '<div class="order-header">' +
+          '<div>' +
+            '<strong>' + o.customerName + '</strong>　' +
+            '<a href="tel:' + o.customerPhone + '">' + o.customerPhone + '</a>' +
+          '</div>' +
+          '<div>' +
+            '<span class="tag ' + (isPicked ? 'tag-active' : 'tag-draft') + '">' + (isPicked ? '已取貨' : '未取貨') + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<p class="muted">來源：' + o.sourceRef + '　' + (o.createdAt ? new Date(o.createdAt).toLocaleString('zh-TW') : '') + '</p>' +
+        (o.note ? '<p class="muted">備註：' + o.note + '</p>' : '') +
+        '<ul class="item-list">' + itemsHtml + '</ul>' +
+        '<div class="order-footer-row">' +
+          '<span class="order-total-label">合計 <strong>$' + o.totalAmount + '</strong></span>' +
+          '<div class="order-actions">' +
+            '<button class="btn-sm" onclick="togglePickup(\'' + o.orderId + '\', ' + isPicked + ')">' +
+              (isPicked ? '標記未取' : '標記已取') +
+            '</button>' +
+            '<button class="btn-sm btn-danger" onclick="cancelOrder(\'' + o.orderId + '\', \'' + o.customerName + '\')">取消訂單</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function togglePickup(orderId, currentlyPicked) {
+    var newStatus = currentlyPicked ? 'not_picked_up' : 'picked_up';
+    callGAS({ action: 'updatePickupStatus', adminToken: getToken(), orderId: orderId, pickupStatus: newStatus })
+      .then(function (res) {
+        if (res.ok) { loadOrders(); }
+        else { alert('更新失敗：' + res.error); }
+      });
+  }
+
+  function cancelOrder(orderId, customerName) {
+    if (!confirm('確定取消「' + customerName + '」的訂單？')) return;
+    callGAS({ action: 'cancelOrder', adminToken: getToken(), orderId: orderId })
+      .then(function (res) {
+        if (res.ok) { loadOrders(); }
+        else { alert('取消失敗：' + res.error); }
+      });
+  }
+</script>
+</body>
+</html>

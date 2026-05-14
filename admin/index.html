@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>團購後台</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+
+<!-- 設定密碼 -->
+<div id="screen-setup" class="screen">
+  <div class="auth-box">
+    <h1>設定管理密碼</h1>
+    <p class="muted">首次使用請設定後台密碼</p>
+    <div class="form-group">
+      <label>密碼（至少 6 個字元）</label>
+      <input type="password" id="setup-password" placeholder="請輸入密碼" />
+    </div>
+    <button class="btn-primary" onclick="setupPassword()">設定密碼</button>
+    <p id="setup-error" class="error-msg"></p>
+  </div>
+</div>
+
+<!-- 登入 -->
+<div id="screen-login" class="screen active">
+  <div class="auth-box">
+    <h1>團購後台</h1>
+    <div class="form-group">
+      <label>管理密碼</label>
+      <input type="password" id="login-password" placeholder="請輸入密碼" />
+    </div>
+    <button class="btn-primary" onclick="login()">登入</button>
+    <p id="login-error" class="error-msg"></p>
+  </div>
+</div>
+
+<!-- 後台主頁（團購列表） -->
+<div id="screen-dashboard" class="screen">
+  <header class="admin-header">
+    <h1>團購管理</h1>
+    <button class="btn-primary small" onclick="goTo('group-form.html')">+ 開新團</button>
+    <button class="btn-sm" onclick="goTo('settings.html')">設定</button>
+    <button class="btn-logout" onclick="logout()">登出</button>
+  </header>
+  <div id="group-list"></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
