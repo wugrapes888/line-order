@@ -3,5 +3,5 @@
 
 var CONFIG = {
   GAS_URL:  'https://script.google.com/macros/s/AKfycbzx1ZNxEnWjKeyR351FMVOVq9u4-7XD0RyetdhbukxH4o_ffirbwazTwpaEKtTQUvSS/exec',
-  LIFF_ID:  '<<填入 LINE LIFF ID>>',
+  LIFF_ID:  '2010082573-XCgFZHSH',
 };
