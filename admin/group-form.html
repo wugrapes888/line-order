@@ -77,6 +77,14 @@
         '<input type="number" id="p-price-' + idx + '" placeholder="0" /></div>' +
       '<div class="form-group"><label>說明</label>' +
         '<input type="text" id="p-desc-' + idx + '" placeholder="商品描述（選填）" /></div>' +
+      '<div class="form-group"><label>商品圖片網址</label>' +
+        '<input type="url" id="p-image-' + idx + '" placeholder="https://... （選填）" ' +
+               'oninput="previewProductImage(this)" />' +
+        '<div id="p-preview-' + idx + '" style="margin-top:6px;display:none;">' +
+          '<img src="" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid #ddd;" ' +
+               'onerror="this.parentElement.style.display=\'none\'" />' +
+        '</div>' +
+      '</div>' +
       '<div class="form-group"><label>標籤</label>' +
         '<input type="text" id="p-badge-' + idx + '" placeholder="例：NEW（選填）" /></div>' +
       '<div>' +
@@ -92,6 +100,17 @@
   function removeProduct(idx) {
     var el = document.getElementById('product-' + idx);
     if (el) el.remove();
+  }
+
+  function previewProductImage(input) {
+    var v = input.value.trim();
+    var preview = input.parentElement.querySelector('div');
+    if (v) {
+      preview.style.display = '';
+      preview.querySelector('img').src = v;
+    } else {
+      preview.style.display = 'none';
+    }
   }
 
   // ===== 規格編輯器 =====
@@ -181,12 +200,14 @@
       var pName  = document.getElementById('p-name-' + id).value.trim();
       var pPrice = parseFloat(document.getElementById('p-price-' + id).value);
       var pDesc  = document.getElementById('p-desc-' + id).value.trim();
+      var pImage = document.getElementById('p-image-' + id).value.trim();
       var pBadge = document.getElementById('p-badge-' + id).value.trim();
       if (pName && !isNaN(pPrice)) {
         products.push({
           productName: pName,
           price:       pPrice,
           description: pDesc,
+          imageUrl:    pImage,
           badge:       pBadge,
           isActive:    true,
           optionsJson: collectSpecs(id)

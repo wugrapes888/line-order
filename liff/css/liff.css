@@ -41,6 +41,37 @@ body {
 .success-icon { font-size: 64px; color: var(--color-primary); margin-bottom: 16px; text-align: center; }
 #screen-success { text-align: center; }
 
+/* 品牌橫幅 */
+.brand-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, #1D9E75 0%, #15795b 100%);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(29,158,117,.25);
+}
+.brand-logo {
+  width: 56px; height: 56px;
+  background: rgba(255,255,255,.2);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+.brand-name {
+  font-size: 22px; font-weight: 800;
+  color: #fff;
+  letter-spacing: 2px;
+}
+.brand-sub {
+  font-size: 14px; color: rgba(255,255,255,.85);
+  margin-top: 2px; letter-spacing: 3px;
+}
+
 /* 標題 */
 .order-header { margin-bottom: 16px; }
 .order-header h1 { font-size: 22px; }
@@ -50,10 +81,22 @@ body {
 .product-card {
   background: var(--color-white);
   border-radius: 12px;
-  padding: 14px 16px;
+  overflow: hidden;
   margin-bottom: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
+.product-img {
+  width: 100%; height: 180px;
+  object-fit: cover;
+  display: block;
+}
+.product-img-placeholder {
+  width: 100%; height: 120px;
+  background: linear-gradient(135deg, #e8f5f0 0%, #d0ede4 100%);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-primary); font-size: 32px;
+}
+.product-body { padding: 14px 16px; }
 .product-info { display: flex; justify-content: space-between; align-items: center; }
 .product-name { font-size: 17px; font-weight: 600; }
 .product-price { font-size: 16px; color: var(--color-primary); font-weight: 600; }

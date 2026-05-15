@@ -76,17 +76,25 @@ function renderProductList() {
       }).join('');
     }
 
+    var imgHtml = '';
+    if (p.imageUrl) {
+      imgHtml = '<img class="product-img" src="' + p.imageUrl + '" alt="' + p.productName + '" onerror="this.style.display=\'none\'">';
+    }
+
     card.innerHTML =
-      '<div class="product-info">' +
-        '<span class="product-name">' + p.productName + (p.badge ? ' <span class="badge">' + p.badge + '</span>' : '') + '</span>' +
-        '<span class="product-price">$' + p.price + '</span>' +
-      '</div>' +
-      (p.description ? '<p class="product-desc">' + p.description + '</p>' : '') +
-      optionsHtml +
-      '<div class="qty-row">' +
-        '<button class="qty-btn" onclick="changeItemQty(\'' + p.productId + '\',-1)">−</button>' +
-        '<span class="qty-val" id="qty-' + p.productId + '">0</span>' +
-        '<button class="qty-btn" onclick="changeItemQty(\'' + p.productId + '\',1)">+</button>' +
+      imgHtml +
+      '<div class="product-body">' +
+        '<div class="product-info">' +
+          '<span class="product-name">' + p.productName + (p.badge ? ' <span class="badge">' + p.badge + '</span>' : '') + '</span>' +
+          '<span class="product-price">$' + p.price + '</span>' +
+        '</div>' +
+        (p.description ? '<p class="product-desc">' + p.description + '</p>' : '') +
+        optionsHtml +
+        '<div class="qty-row">' +
+          '<button class="qty-btn" onclick="changeItemQty(\'' + p.productId + '\',-1)">−</button>' +
+          '<span class="qty-val" id="qty-' + p.productId + '">0</span>' +
+          '<button class="qty-btn" onclick="changeItemQty(\'' + p.productId + '\',1)">+</button>' +
+        '</div>' +
       '</div>';
 
     el.appendChild(card);
@@ -178,7 +186,11 @@ function submitOrder() {
   callGAS(payload)
     .then(function (res) {
       if (res.ok) {
-        localStorage.setItem('lastOrder', JSON.stringify(Object.assign({}, res.summary, { viewUrl: res.viewUrl })));
+        localStorage.setItem('lastOrder', JSON.stringify(Object.assign({}, res.summary, {
+          viewUrl: res.viewUrl,
+          team: orderState.team,
+          savedAt: Date.now()
+        })));
         showSuccessPage(res);
       } else {
         alert('送出失敗：' + res.error);
@@ -234,6 +246,12 @@ function renderCachedOrder() {
   if (!raw) return;
   try {
     var s = JSON.parse(raw);
+    var isRecent = s.savedAt && (Date.now() - s.savedAt < 30 * 60 * 1000);
+    var isSameTeam = s.team === orderState.team;
+    if (!isRecent || !isSameTeam) {
+      localStorage.removeItem('lastOrder');
+      return;
+    }
     var summaryEl = document.getElementById('success-summary');
     if (!summaryEl) return;
     summaryEl.innerHTML =
