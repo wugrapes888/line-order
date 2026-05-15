@@ -114,13 +114,28 @@
     var file = input.files[0];
     var preview = document.getElementById('p-preview-' + input.id.replace('p-image-', ''));
     if (!file) { preview.style.display = 'none'; return; }
+
     var reader = new FileReader();
     reader.onload = function (e) {
-      preview.style.display = '';
-      preview.querySelector('img').src = e.target.result;
-      input.dataset.base64 = e.target.result.split(',')[1];
-      input.dataset.mime = file.type;
-      input.dataset.filename = file.name;
+      var img = new Image();
+      img.onload = function () {
+        var MAX = 1000;
+        var w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else       { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        var compressed = canvas.toDataURL('image/jpeg', 0.75);
+        preview.style.display = '';
+        preview.querySelector('img').src = compressed;
+        input.dataset.base64 = compressed.split(',')[1];
+        input.dataset.mime = 'image/jpeg';
+        input.dataset.filename = file.name.replace(/\.[^.]+$/, '.jpg');
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
