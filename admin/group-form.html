@@ -17,6 +17,12 @@
     .spec-add-row button { padding: 6px 12px; border-radius: 6px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 14px; }
     .spec-options-row { display: flex; gap: 12px; font-size: 13px; color: #555; margin-top: 4px; }
     .spec-options-row label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .upload-btn {
+      display: inline-block; padding: 8px 16px;
+      background: #f0f0f0; border: 1.5px dashed #bbb;
+      border-radius: 8px; font-size: 14px; cursor: pointer; color: #555;
+    }
+    .upload-btn:hover { background: #e4e4e4; }
   </style>
 </head>
 <body>
@@ -77,12 +83,14 @@
         '<input type="number" id="p-price-' + idx + '" placeholder="0" /></div>' +
       '<div class="form-group"><label>說明</label>' +
         '<input type="text" id="p-desc-' + idx + '" placeholder="商品描述（選填）" /></div>' +
-      '<div class="form-group"><label>商品圖片網址</label>' +
-        '<input type="url" id="p-image-' + idx + '" placeholder="https://... （選填）" ' +
-               'oninput="previewProductImage(this)" />' +
-        '<div id="p-preview-' + idx + '" style="margin-top:6px;display:none;">' +
-          '<img src="" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid #ddd;" ' +
-               'onerror="this.parentElement.style.display=\'none\'" />' +
+      '<div class="form-group"><label>商品圖片（選填）</label>' +
+        '<label class="upload-btn" for="p-image-' + idx + '">📷 選擇圖片</label>' +
+        '<input type="file" id="p-image-' + idx + '" accept="image/*" style="display:none;" ' +
+               'onchange="previewProductImage(this)" />' +
+        '<div id="p-preview-' + idx + '" style="margin-top:8px;display:none;position:relative;">' +
+          '<img src="" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;border:1px solid #ddd;" />' +
+          '<button type="button" onclick="clearProductImage(' + idx + ')" ' +
+                  'style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1;">×</button>' +
         '</div>' +
       '</div>' +
       '<div class="form-group"><label>標籤</label>' +
@@ -103,14 +111,26 @@
   }
 
   function previewProductImage(input) {
-    var v = input.value.trim();
-    var preview = input.parentElement.querySelector('div');
-    if (v) {
+    var file = input.files[0];
+    var preview = document.getElementById('p-preview-' + input.id.replace('p-image-', ''));
+    if (!file) { preview.style.display = 'none'; return; }
+    var reader = new FileReader();
+    reader.onload = function (e) {
       preview.style.display = '';
-      preview.querySelector('img').src = v;
-    } else {
-      preview.style.display = 'none';
-    }
+      preview.querySelector('img').src = e.target.result;
+      input.dataset.base64 = e.target.result.split(',')[1];
+      input.dataset.mime = file.type;
+      input.dataset.filename = file.name;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearProductImage(idx) {
+    var input = document.getElementById('p-image-' + idx);
+    var preview = document.getElementById('p-preview-' + idx);
+    input.value = '';
+    delete input.dataset.base64;
+    preview.style.display = 'none';
   }
 
   // ===== 規格編輯器 =====
@@ -197,20 +217,22 @@
     var products = [];
     document.querySelectorAll('.product-form-card').forEach(function (card) {
       var id     = card.id.replace('product-', '');
-      var pName  = document.getElementById('p-name-' + id).value.trim();
-      var pPrice = parseFloat(document.getElementById('p-price-' + id).value);
-      var pDesc  = document.getElementById('p-desc-' + id).value.trim();
-      var pImage = document.getElementById('p-image-' + id).value.trim();
-      var pBadge = document.getElementById('p-badge-' + id).value.trim();
+      var pName     = document.getElementById('p-name-' + id).value.trim();
+      var pPrice    = parseFloat(document.getElementById('p-price-' + id).value);
+      var pDesc     = document.getElementById('p-desc-' + id).value.trim();
+      var pBadge    = document.getElementById('p-badge-' + id).value.trim();
+      var pImgInput = document.getElementById('p-image-' + id);
       if (pName && !isNaN(pPrice)) {
         products.push({
-          productName: pName,
-          price:       pPrice,
-          description: pDesc,
-          imageUrl:    pImage,
-          badge:       pBadge,
-          isActive:    true,
-          optionsJson: collectSpecs(id)
+          productName:   pName,
+          price:         pPrice,
+          description:   pDesc,
+          badge:         pBadge,
+          isActive:      true,
+          optionsJson:   collectSpecs(id),
+          imageBase64:   pImgInput.dataset.base64 || '',
+          imageMime:     pImgInput.dataset.mime || '',
+          imageFilename: pImgInput.dataset.filename || ''
         });
       }
     });

@@ -333,6 +333,12 @@ var GroupService = (function () {
     var productId = 'prd_' + Utilities.formatDate(now, 'Asia/Taipei', 'yyyyMMddHHmmss') + '_' +
                     Math.floor(Math.random() * 100);
     var count = sheet.getLastRow();
+
+    var imageUrl = p.imageUrl || '';
+    if (p.imageBase64 && p.imageMime) {
+      imageUrl = saveImageToDrive(p.imageBase64, p.imageMime, p.imageFilename || 'product.jpg');
+    }
+
     sheet.appendRow([
       productId,
       groupId,
@@ -343,8 +349,18 @@ var GroupService = (function () {
       p.isActive !== false,
       count,
       p.badge || '',
-      p.imageUrl || ''
+      imageUrl
     ]);
+  }
+
+  function saveImageToDrive(base64Data, mimeType, filename) {
+    var folderName = '團購商品圖片';
+    var folders = DriveApp.getFoldersByName(folderName);
+    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+    var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, filename);
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return 'https://drive.google.com/uc?export=view&id=' + file.getId();
   }
 
   function toTeamCode(name) {
